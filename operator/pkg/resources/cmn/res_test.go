@@ -60,6 +60,7 @@ var _ = Describe("Health Probes", Label("short"), func() {
 		DescribeTable("NewReadinessProbe",
 			func(role string) {
 				probe := NewReadinessProbe(ais, role)
+				Expect(probe.InitialDelaySeconds).To(BeZero())
 				Expect(probe.PeriodSeconds).To(BeEquivalentTo(defaultProbePeriodSeconds))
 				Expect(probe.FailureThreshold).To(BeEquivalentTo(defaultReadinessFailureThreshold))
 				Expect(probe.TimeoutSeconds).To(BeEquivalentTo(defaultProbeTimeoutSeconds))
@@ -72,6 +73,7 @@ var _ = Describe("Health Probes", Label("short"), func() {
 		DescribeTable("NewStartupProbe",
 			func(role string) {
 				probe := NewStartupProbe(ais, role)
+				Expect(probe.InitialDelaySeconds).To(BeZero())
 				Expect(probe.PeriodSeconds).To(BeEquivalentTo(defaultStartupPeriodSeconds))
 				Expect(probe.FailureThreshold).To(BeEquivalentTo(defaultStartupFailureThreshold))
 				Expect(probe.TimeoutSeconds).To(BeEquivalentTo(defaultProbeTimeoutSeconds))

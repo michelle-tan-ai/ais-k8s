@@ -788,6 +788,37 @@ var _ = Describe("AIStoreController", func() {
 				},
 				true,
 			),
+			Entry("different liveness probe",
+				&corev1.PodTemplateSpec{
+					Spec: corev1.PodSpec{
+						InitContainers: []corev1.Container{{Image: "test:latest"}},
+						Containers: []corev1.Container{{
+							Image: "test:latest",
+							LivenessProbe: &corev1.Probe{
+								InitialDelaySeconds: 120,
+								PeriodSeconds:       10,
+								FailureThreshold:    20,
+								TimeoutSeconds:      5,
+							},
+						}},
+					},
+				},
+				&corev1.PodTemplateSpec{
+					Spec: corev1.PodSpec{
+						InitContainers: []corev1.Container{{Image: "test:latest"}},
+						Containers: []corev1.Container{{
+							Image: "test:latest",
+							LivenessProbe: &corev1.Probe{
+								InitialDelaySeconds: 60,
+								PeriodSeconds:       5,
+								FailureThreshold:    10,
+								TimeoutSeconds:      5,
+							},
+						}},
+					},
+				},
+				true,
+			),
 			Entry("different volumes",
 				&corev1.PodTemplateSpec{
 					Spec: corev1.PodSpec{

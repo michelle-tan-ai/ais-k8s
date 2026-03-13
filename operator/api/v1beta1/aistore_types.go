@@ -575,6 +575,8 @@ type DaemonSpec struct {
 
 // ProbeSpec defines optional overrides for Kubernetes probe timing parameters.
 // All fields are optional; unset fields use operator defaults.
+// SuccessThreshold is intentionally omitted: Kubernetes requires it to be 1 for liveness
+// and startup probes, and the default of 1 is appropriate for readiness probes.
 // +kubebuilder:validation:MinProperties=1
 type ProbeSpec struct {
 	// +kubebuilder:validation:Minimum=1

@@ -88,7 +88,7 @@ func NewLivenessProbe(ais *aisv1.AIStore, daemonRole string) *corev1.Probe {
 		ProbeHandler:        newHTTPProbeHandle(ais, daemonRole, probeLivenessEndpoint),
 		InitialDelaySeconds: int32ValOrDefault(spec.InitialDelaySeconds, defaultLivenessInitialDelaySeconds),
 		PeriodSeconds:       int32ValOrDefault(spec.PeriodSeconds, defaultProbePeriodSeconds),
-		// Liveness looks for the AIS daemon to successfully join the cluster.
+		// liveness looks for the AIS daemon to successfully join the cluster.
 		// Cluster join sequence could take a bit long, so add some initial delay to
 		// ensure K8s doesn't kill the aisnode container prematurely.
 		FailureThreshold: int32ValOrDefault(spec.FailureThreshold, defaultLivenessFailureThreshold),
@@ -98,27 +98,34 @@ func NewLivenessProbe(ais *aisv1.AIStore, daemonRole string) *corev1.Probe {
 
 func NewReadinessProbe(ais *aisv1.AIStore, daemonRole string) *corev1.Probe {
 	spec := getProbeSpec(ais, daemonRole, func(c *aisv1.ProbeConfSpec) *aisv1.ProbeSpec { return c.Readiness })
-	return &corev1.Probe{
-		ProbeHandler:        newHTTPProbeHandle(ais, daemonRole, probeReadinessEndpoint),
-		InitialDelaySeconds: int32ValOrDefault(spec.InitialDelaySeconds, 0),
-		PeriodSeconds:       int32ValOrDefault(spec.PeriodSeconds, defaultProbePeriodSeconds),
-		FailureThreshold:    int32ValOrDefault(spec.FailureThreshold, defaultReadinessFailureThreshold),
-		TimeoutSeconds:      int32ValOrDefault(spec.TimeoutSeconds, defaultProbeTimeoutSeconds),
+	probe := &corev1.Probe{
+		ProbeHandler:     newHTTPProbeHandle(ais, daemonRole, probeReadinessEndpoint),
+		PeriodSeconds:    int32ValOrDefault(spec.PeriodSeconds, defaultProbePeriodSeconds),
+		FailureThreshold: int32ValOrDefault(spec.FailureThreshold, defaultReadinessFailureThreshold),
+		TimeoutSeconds:   int32ValOrDefault(spec.TimeoutSeconds, defaultProbeTimeoutSeconds),
 	}
+	if spec.InitialDelaySeconds != nil {
+		probe.InitialDelaySeconds = *spec.InitialDelaySeconds
+	}
+	return probe
 }
 
 func NewStartupProbe(ais *aisv1.AIStore, daemonRole string) *corev1.Probe {
 	spec := getProbeSpec(ais, daemonRole, func(c *aisv1.ProbeConfSpec) *aisv1.ProbeSpec { return c.Startup })
-	return &corev1.Probe{
-		ProbeHandler:        newHTTPProbeHandle(ais, daemonRole, probeReadinessEndpoint),
-		InitialDelaySeconds: int32ValOrDefault(spec.InitialDelaySeconds, 0),
+	probe := &corev1.Probe{
+		ProbeHandler: newHTTPProbeHandle(ais, daemonRole, probeReadinessEndpoint),
 		// For startup probe, which is a one-time probe we are more aggressive in checking for readiness.
+		// We leave up-to 30secs for the daemon to start responding to HTTP request.
 		// NOTE: Success here only means that the HTTP server is up and running, that doesn't imply AIS daemon is
 		// ready in terms of the AIStore cluster.
 		PeriodSeconds:    int32ValOrDefault(spec.PeriodSeconds, defaultStartupPeriodSeconds),
 		FailureThreshold: int32ValOrDefault(spec.FailureThreshold, defaultStartupFailureThreshold),
 		TimeoutSeconds:   int32ValOrDefault(spec.TimeoutSeconds, defaultProbeTimeoutSeconds),
 	}
+	if spec.InitialDelaySeconds != nil {
+		probe.InitialDelaySeconds = *spec.InitialDelaySeconds
+	}
+	return probe
 }
 
 func NewDaemonPorts(spec *aisv1.DaemonSpec) []corev1.ContainerPort {

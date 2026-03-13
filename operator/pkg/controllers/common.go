@@ -73,7 +73,17 @@ func shouldUpdatePodTemplate(desired, current *corev1.PodTemplateSpec) (bool, st
 		return true, "updating priority class name"
 	}
 
+	if shouldUpdateProbes(&desired.Spec.Containers[0], &current.Spec.Containers[0]) {
+		return true, "updating health probes"
+	}
+
 	return false, ""
+}
+
+func shouldUpdateProbes(desired, current *corev1.Container) bool {
+	return !equality.Semantic.DeepEqual(desired.LivenessProbe, current.LivenessProbe) ||
+		!equality.Semantic.DeepEqual(desired.ReadinessProbe, current.ReadinessProbe) ||
+		!equality.Semantic.DeepEqual(desired.StartupProbe, current.StartupProbe)
 }
 
 func shouldUpdateSecurityContext(desired, current *corev1.PodSpec) (bool, string) {
